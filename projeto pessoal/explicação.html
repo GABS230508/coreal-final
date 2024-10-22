@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    </head>
+    <header>
+        <center>
+            <img src="logo.png" alt="width" :100px alt="height" :50px>
+        </center>
+        </nav>
+    </header>
+    <style>
+      header{
+        background-color: black;
+      }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .upload-section {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .media-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .media-preview img, .media-preview video {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+        .post {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .post img, .post video {
+            max-width: 100%;
+            max-height: 300px;
+            width: auto;
+            height: auto;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="upload-section">
+        <h2>Postar Fotos e Vídeos dos Ensaios</h2>
+        
+        <!-- Apenas um input para pegar arquivos -->
+        <input type="file" id="mediaInput" multiple accept="image/*, video/*" onchange="previewMedia()">
+        
+        <div class="media-preview" id="mediaPreview"></div>
+
+        <button onclick="postMedia()">Postar Mídia</button>
+    </div>
+
+    <div id="postedMedia" class="upload-section"></div>
+
+    <script>
+        // Função para pré-visualizar as mídias selecionadas
+        function previewMedia() {
+            const mediaInput = document.getElementById('mediaInput');
+            const mediaPreview = document.getElementById('mediaPreview');
+            mediaPreview.innerHTML = '';  // Limpar pré-visualizações anteriores
+
+            Array.from(mediaInput.files).forEach(file => {
+                const mediaElement = document.createElement(file.type.startsWith('video') ? 'video' : 'img');
+                mediaElement.src = URL.createObjectURL(file);
+                mediaElement.controls = file.type.startsWith('video') ? true : false;
+                mediaPreview.appendChild(mediaElement);
+            });
+        }
+
+        // Função para postar a mídia na página e salvar no localStorage
+        function postMedia() {
+            const mediaInput = document.getElementById('mediaInput');
+            const postedMedia = document.getElementById('postedMedia');
+            const mediaArray = [];
+
+            if (mediaInput.files.length === 0) {
+                alert('Por favor, selecione fotos ou vídeos para postar.');
+                return;
+            }
+
+            const post = document.createElement('div');
+            post.classList.add('post');
+
+            // Adiciona a mídia selecionada ao post e ao array mediaArray
+            Array.from(mediaInput.files).forEach(file => {
+                const mediaElement = document.createElement(file.type.startsWith('video') ? 'video' : 'img');
+                mediaElement.src = URL.createObjectURL(file);
+                mediaElement.controls = file.type.startsWith('video') ? true : false;
+                post.appendChild(mediaElement);
+
+                // Salva a mídia como base64 no array mediaArray
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    mediaArray.push({ type: file.type, src: e.target.result });
+                    // Verifica se todas as mídias foram processadas
+                    if (mediaArray.length === mediaInput.files.length) {
+                        savePosts(mediaArray); // Salva todas as mídias no localStorage
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Adiciona o botão de exclusão
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.textContent = 'Excluir Postagem';
+            deleteBtn.onclick = function() {
+                post.remove();
+                deletePost(mediaArray); // Remove a postagem do localStorage
+            };
+            post.appendChild(deleteBtn);
+
+            postedMedia.appendChild(post);
+
+            // Limpar a área de pré-visualização e o input
+            document.getElementById('mediaPreview').innerHTML = '';
+            mediaInput.value = '';
+        }
+
+        // Função para salvar as postagens no localStorage
+        function savePosts(mediaArray = []) {
+            const posts = JSON.parse(localStorage.getItem('posts')) || [];
+
+            // Adiciona o novo array de mídias ao array de posts
+            if (mediaArray.length > 0) {
+                posts.push(mediaArray);
+            }
+
+            localStorage.setItem('posts', JSON.stringify(posts));
+        }
+
+        // Função para excluir a postagem do localStorage
+        function deletePost(mediaArray) {
+            let posts = JSON.parse(localStorage.getItem('posts')) || [];
+
+            // Filtrar o array de posts, removendo o post correspondente
+            posts = posts.filter(post => JSON.stringify(post) !== JSON.stringify(mediaArray));
+
+            // Atualizar o localStorage com os posts restantes
+            localStorage.setItem('posts', JSON.stringify(posts));
+        }
+
+        // Função para carregar as postagens salvas no localStorage
+        function loadPosts() {
+            const savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
+            const postedMedia = document.getElementById('postedMedia');
+
+            savedPosts.forEach(postMedia => {
+                const post = document.createElement('div');
+                post.classList.add('post');
+
+                postMedia.forEach(media => {
+                    const mediaElement = document.createElement(media.type === 'video' ? 'video' : 'img');
+                    mediaElement.src = media.src;
+                    mediaElement.controls = media.type === 'video';
+                    post.appendChild(mediaElement);
+                });
+
+                // Adiciona o botão de exclusão
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('delete-btn');
+                deleteBtn.textContent = 'Excluir Postagem';
+                deleteBtn.onclick = function() {
+                    post.remove();
+                    deletePost(postMedia); // Remove a postagem do localStorage
+                };
+                post.appendChild(deleteBtn);
+
+                postedMedia.appendChild(post);
+            });
+        }
+
+        // Carregar postagens salvas ao carregar a página
+        window.onload = function() {
+            loadPosts();
+        };
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<header>
+    <center>
+        <img src="logo.png" alt="width" :100px alt="height" :50px>
+    </center>
+    </nav>
+</header>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .comment-section {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .comment {
+        border: 1px solid #ccc;
+        padding: 15px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+
+    .comment p {
+        margin: 0;
+    }
+
+    .comment-status {
+        font-size: 12px;
+        color: #666;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .like-btn {
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .like-btn.liked {
+        background-color: #28a745;
+    }
+
+    .like-count {
+        font-size: 14px;
+        margin-left: 5px;
+    }
+
+    .new-comment {
+        margin-top: 20px;
+    }
+
+    .new-comment textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .new-comment button {
+        padding: 10px 20px;
+        margin-top: 10px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: block;
+        width: 100%;
+    }
+
+    .delete-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+    }
+    header{
+        background-color: rgb(0, 0, 0);
+    }
+</style>
+</head>
+
+<body>
+
+    <div class="comment-section">
+        <h2>♫Sugestões♬</h2>
+
+        <div class="new-comment">
+            <textarea id="newCommentText" rows="4" placeholder="Adicione um novo comentário"></textarea>
+            <button onclick="addComment()">Adicionar Comentário</button>
+        </div>
+    </div>
+
+    <script>
+        // Função para carregar comentários do localStorage
+        function loadComments() {
+            const comments = JSON.parse(localStorage.getItem('comments')) || [];
+            comments.forEach(comment => {
+                displayComment(comment.text, comment.viewed, comment.likes);
+            });
+        }
+
+        // Função para salvar comentários no localStorage
+        function saveComments() {
+            const comments = [];
+            document.querySelectorAll('.comment').forEach(comment => {
+                const text = comment.querySelector('p').textContent;
+                const viewed = comment.getAttribute('data-viewed') === 'true';
+                const likes = parseInt(comment.querySelector('.like-count').textContent);
+                comments.push({ text, viewed, likes });
+            });
+            localStorage.setItem('comments', JSON.stringify(comments));
+        }
+
+        // Função para exibir um comentário na página
+        function displayComment(text, viewed = false, likes = 0) {
+            const commentSection = document.querySelector('.comment-section');
+            const newComment = document.createElement('div');
+            newComment.classList.add('comment');
+            newComment.setAttribute('data-viewed', viewed ? 'true' : 'false');
+
+            newComment.innerHTML = `
+                <p>${text}</p>
+                <span class="comment-status">${viewed ? 'Visto' : 'Não visto'}</span>
+                <button class="like-btn" onclick="likeComment(this)">Curtir</button>
+                <span class="like-count">${likes}</span>
+                <button class="delete-btn" onclick="deleteComment(this)">Excluir</button>
+            `;
+
+            // Marca o comentário como visto ao clicar nele
+            newComment.addEventListener('click', function () {
+                if (this.getAttribute('data-viewed') === 'false') {
+                    this.setAttribute('data-viewed', 'true');
+                    this.querySelector('.comment-status').textContent = 'Visto';
+                    saveComments();  // Salva alterações após marcar como visto
+                }
+            });
+
+            commentSection.insertBefore(newComment, document.querySelector('.new-comment'));
+        }
+
+        // Função para adicionar um novo comentário
+        function addComment() {
+            const commentText = document.getElementById('newCommentText').value;
+            if (commentText.trim() === "") {
+                alert("O comentário não pode estar vazio!");
+                return;
+            }
+
+            displayComment(commentText);
+            document.getElementById('newCommentText').value = "";
+            saveComments();  // Salvar após adicionar um novo comentário
+        }
+
+        // Função para curtir/descurtir um comentário
+        function likeComment(button) {
+            const likeCount = button.nextElementSibling;
+            let count = parseInt(likeCount.textContent);
+            if (!button.classList.contains('liked')) {
+                button.classList.add('liked');
+                button.textContent = 'Curtido';
+                count++;
+            } else {
+                button.classList.remove('liked');
+                button.textContent = 'Curtir';
+                count--;
+            }
+            likeCount.textContent = count;
+            saveComments();  // Salvar alterações após curtir/descurtir
+        }
+
+        // Função para excluir um comentário
+        function deleteComment(button) {
+            const comment = button.closest('.comment');
+            comment.remove();
+            saveComments();  // Salvar alterações após excluir um comentário
+        }
+
+        // Carregar comentários quando a página for carregada
+        window.onload = function () {
+            loadComments();
+        }
+    </script>
+
+</body>
+
+</html>
